@@ -3,7 +3,7 @@ const mapObj = require('map-obj');
 const filter = require('filter-obj');
 const map = require('map-iterable');
 const pairs = require('object-pairs');
-const MagicString = require('magic-string');
+const MagicString = require('magic-string').default;
 const tokens = require('../../../utils/tokens');
 const fieldSplitting = require('./field-splitting');
 
