@@ -145,6 +145,17 @@ const mkMutableState = reducers => class {
 		return this;
 	}
 
+	addExpansionTokenCount() {
+		this.expansionTokenCount = this.expansionTokenCount ?
+			this.expansionTokenCount + 1 : 1 
+		return this
+	}
+
+	removeExpansionTokenCount() {
+		this.expansionTokenCount--
+		return this
+	}
+
 	replaceLastExpansion(fields) {
 		const xp = last(this.expansion);
 		Object.assign(xp, fields);

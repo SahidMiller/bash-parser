@@ -5,12 +5,21 @@ const t = require('../../../../utils/tokens');
 
 const continueToken = t.continueToken;
 
-module.exports = function expansionArithmetic(state, source) {
+module.exports = function expansionArithmetic(state, source, reducers) {
 	const char = source && source.shift();
 
 	const xp = last(state.expansion);
-
+	
+	
 	if (char === ')' && state.current.slice(-1)[0] === ')') {
+		
+		if (state.expansionTokenCount > 0) {
+			return {
+				nextReduction: reducers.expansionCommandOrArithmetic,
+				nextState: state.appendChar(char).replaceLastExpansion({command: (xp.command || '') + char}).removeExpansionTokenCount()
+			}
+		}
+		
 		return {
 			nextReduction: state.previousReducer,
 			nextState: state
@@ -20,6 +29,7 @@ module.exports = function expansionArithmetic(state, source) {
 					expression: xp.value.slice(0, -1),
 					loc: Object.assign({}, xp.loc, {end: state.loc.current})
 				})
+				.removeExpansionTokenCount()
 				.deleteLastExpansionValue()
 		};
 	}
@@ -33,8 +43,11 @@ module.exports = function expansionArithmetic(state, source) {
 			})
 		};
 	}
-
-	return {
+	
+	return state.expansionTokenCount > 0 ? {
+		nextReduction: expansionArithmetic,
+		nextState: state.appendChar(char).replaceLastExpansion({command: (xp.command || '') + char})
+	} :	{
 		nextReduction: expansionArithmetic,
 		nextState: state.appendChar(char).replaceLastExpansion({value: (xp.value || '') + char})
 	};

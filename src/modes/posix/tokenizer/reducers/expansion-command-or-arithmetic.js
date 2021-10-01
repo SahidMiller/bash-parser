@@ -10,9 +10,21 @@ module.exports = function expansionCommandOrArithmetic(state, source, reducers) 
 	const xp = last(state.expansion);
 
 	if (char === '(' && state.current.slice(-2) === '$(') {
+
+		if (state.expansionTokenCount) {
+			state.replaceLastExpansion({command: (xp.command || '') + char})
+		}
+
 		return {
 			nextReduction: reducers.expansionArithmetic,
-			nextState: state.appendChar(char)
+			nextState: state.appendChar(char),
+		};
+	}
+
+	if (!state.escaping && char === "$") {
+		return {
+			nextReduction: reducers.expansionStart,
+			nextState: state.appendChar(char).addExpansionTokenCount().replaceLastExpansion({command: (xp.command || '') + char}),
 		};
 	}
 
@@ -26,16 +38,27 @@ module.exports = function expansionCommandOrArithmetic(state, source, reducers) 
 		};
 	}
 
-	if (char === ')') {
-		return {
-			nextReduction: state.previousReducer,
-			nextState: state.appendChar(char).replaceLastExpansion({
-				type: 'command_expansion',
-				loc: Object.assign({}, xp.loc, {
-					end: state.loc.current
-				})
-			})
-		};
+	if (char === ")") {
+		
+		if (!state.expansionTokenCount) {
+			
+			return {
+				nextReduction: state.previousReducer,
+				nextState: state.appendChar(char).replaceLastExpansion({
+					type: "command_expansion",
+					loc: Object.assign({}, xp.loc, {
+						end: state.loc.current,
+					}),
+				}),
+			};
+
+		} else {
+			
+			return {
+				nextReduction: reducers.expansionCommandOrArithmetic,
+				nextState: state.appendChar(char).removeExpansionTokenCount().replaceLastExpansion({command: (xp.command || '') + char})
+			}
+		}
 	}
 
 	return {
